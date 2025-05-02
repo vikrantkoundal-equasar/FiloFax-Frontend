@@ -1,6 +1,6 @@
 import React from "react";
 import { Menu, Settings } from "lucide-react";
-import { Button } from "@components/ui/button";
+import { Button } from "@components/ui/Button";
 
 const Header = ({ toggleSidebar }) => {
 return (
