@@ -2,6 +2,9 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import validator from "validator";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import Cookies from "js-cookie";
 
 // Constants
 const PASSWORD_REQUIREMENTS = {
@@ -11,9 +14,11 @@ const PASSWORD_REQUIREMENTS = {
   minNumbers: 1,
   minSymbols: 1,
 };
+const loginUrl = import.meta.env.VITE_BASE_AUTH_URL;
 
 export default function Login() {
   // Form state
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -37,25 +42,60 @@ export default function Login() {
   };
 
   // Form submission handler
-  const handleSubmit = (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    // Validate fields
-    const newErrors = {
-      email: validateEmail(email),
-      password: validatePassword(password),
-    };
-
-    setErrors(newErrors);
-
-    // Check if there are any errors
-    const hasErrors = Object.values(newErrors).some((error) => error !== "");
-
-    if (!hasErrors) {
-      // Handle login logic here (e.g., API call)
-      console.log("Login attempt with:", { email, password });
-    }
+  const newErrors = {
+    email: validateEmail(email),
+    password: validatePassword(password),
   };
+
+  setErrors(newErrors);
+
+  const hasErrors = Object.values(newErrors).some((error) => error !== "");
+
+  if (!hasErrors) {
+    try {
+      const response = await axios.post(`${loginUrl}/local-login`, {
+        email,
+        password,
+      });
+
+      console.log("Login successful:", response.data.userDetails);
+
+      // Store token in cookies
+      const { token, refreshToken } = response.data;
+
+      Cookies.set("token", token, { expires: 1 }); // expires in 1 day
+      Cookies.set("refreshToken", refreshToken, { expires: 7 }); // optional
+
+      // Navigate to dashboard
+      navigate("/dashboard");
+    } catch (error) {
+      if (error.response) {
+        // 👇 Backend responded with an error
+        console.error("Login failed with response:", error.response);
+
+        const status = error.response.status;
+        const message =
+          error.response.data?.message ||
+          error.response.data?.error ||
+          "Unknown error from server";
+
+        alert(`Login failed [${status}]: ${message}`);
+      } else if (error.request) {
+        // 👇 Request was made but no response received
+        console.error("No response received:", error.request);
+        alert("Login failed: No response from server.");
+      } else {
+        // 👇 Something else caused the error
+        console.error("Error in request setup:", error.message);
+        alert("Login failed: " + error.message);
+      }
+    }
+
+  }
+};
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-white">

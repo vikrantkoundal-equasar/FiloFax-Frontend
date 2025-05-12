@@ -12,6 +12,8 @@
   "dependencies": {
     "@radix-ui/react-switch": "^1.2.2",
     "axios": "^1.9.0",
+    "framer-motion": "^12.10.0",
+    "js-cookie": "^3.0.5",
     "lucide": "^0.503.0",
     "lucide-react": "^0.503.0",
     "ngrok": "^5.0.0-beta.2",

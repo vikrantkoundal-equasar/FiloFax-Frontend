@@ -1,19 +1,24 @@
-// in App.jsx
+// In your App.jsx, make sure your Dashboard route uses a wildcard pattern
+// This allows the nested routes in Dashboard to work properly
+
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import "./App.css";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import Dashboard from "./pages/dashboard/Dashboard";
+import UserProfile from "./pages/UserProfile";
 
 function App() {
   return (
     <BrowserRouter>
-     <Routes>
+      <Routes>
         <Route path="/" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />  
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/signup" element={<Signup />} />
+        {/* Note the wildcard (*) here which is important for nested routes */}
+        <Route path="/dashboard/*" element={<Dashboard />} />
+        <Route path="/user-profile" element={<UserProfile />} />
       </Routes>
     </BrowserRouter>
   );
 }
+
 export default App;

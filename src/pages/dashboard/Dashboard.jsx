@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from "react";
-// Change these import paths if needed
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import EventCard from "../../components/EventCard";
+import EventDetailDrawer from "../../components/eventDrawer/EventDetailDrawer";
+// Import your page components
+import Meetings from "./Meetings"; // Import your existing component
+import Availability from "./Availability"; // Import your existing component
 
 // Sample event data - normally would come from API
 const initialEvents = [
@@ -12,31 +16,34 @@ const initialEvents = [
     path: "/asif-khan-tm5thr/30min",
     isActive: true,
   },
-  {
-    id: 2,
-    title: "15 Min Meeting",
-    path: "/asif-khan-tm5thr/15min",
-    isActive: false,
-  },
-  {
-    id: 3,
-    title: "One on One",
-    path: "/asif-khan-tm5thr/oneonone",
-    isActive: false,
-  },
 ];
 
 const Dashboard = () => {
+  const [selectedEvent, setSelectedEvent] = useState(null);
   const [events, setEvents] = useState(initialEvents);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const location = useLocation();
 
-  // Check screen size on load and resize
+  // Check if the current page is event-type
+  const isEventTypePage =
+    location.pathname === "/dashboard" ||
+    location.pathname === "/dashboard/event-type";
+
+  const handleCardClick = (event) => {
+    setSelectedEvent(event); // open drawer
+  };
+
+  const closeDrawer = () => {
+    setSelectedEvent(null); // close drawer
+  };
+
+  // Screen size check
   useEffect(() => {
     const checkScreenSize = () => {
       const mobile = window.innerWidth < 1024;
       setIsMobile(mobile);
-      setIsSidebarOpen(!mobile); // Open on desktop, closed on mobile
+      setIsSidebarOpen(!mobile); // open by default on desktop
     };
 
     checkScreenSize();
@@ -44,77 +51,112 @@ const Dashboard = () => {
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
-  // Toggle sidebar
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  // Handle event active status toggle
   const handleToggleActive = (eventId, isActive) => {
-    // Update events state
     setEvents(
       events.map((event) =>
         event.id === eventId ? { ...event, isActive } : event
       )
     );
 
-    // In a real app, you would make an API call here
     console.log(
       `API call to update event ${eventId} to ${
         isActive ? "active" : "inactive"
       }`
     );
-
-    // Example API call:
-    // fetch(`/api/events/${eventId}`, {
-    //   method: 'PATCH',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ isActive })
-    // });
   };
 
+  const handleCreateNewEvent = () => {
+    const newId = events.length + 1;
+    const newEvent = {
+      id: newId,
+      title: "One-on-One Meeting",
+      path: `/new-event-${newId}`,
+      isActive: false,
+    };
+    setEvents([...events, newEvent]);
+  };
+
+  // EventType page content - this is your current dashboard content
+  const EventTypeContent = () => (
+    <>
+      <div className="mb-8"></div>
+      {/* Event Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {events.map((event) => (
+          <EventCard
+            key={event.id}
+            event={event}
+            onToggleActive={handleToggleActive}
+            onClick={() => handleCardClick(event)}
+          />
+        ))}
+      </div>
+    </>
+  );
+
   return (
-    <div className="flex min-h-screen bg-[#ffffff]">
-      {/* Sidebar Component */}
+    <div className="flex min-h-screen bg-white">
+      {/* Sidebar */}
       <Sidebar
         isSidebarOpen={isSidebarOpen}
         toggleSidebar={toggleSidebar}
         isMobile={isMobile}
       />
 
-      {/* Main Content */}
+      {/* Main Area */}
       <div
-        className={`flex-1 flex flex-col ${
+        className={`flex-1 flex flex-col transition-all duration-300 ${
           isSidebarOpen && !isMobile ? "lg:ml-[230px]" : ""
         }`}
       >
-        {/* Header Component with increased right padding */}
-        <div className="lg:pr-28">
-          <Header toggleSidebar={toggleSidebar} />
-        </div>
+        {/* Header - Only render for Event Type page */}
+        {isEventTypePage && (
+          <div className="lg:pr-28">
+            <Header
+              toggleSidebar={toggleSidebar}
+              onCreateNewEvent={handleCreateNewEvent}
+            />
+          </div>
+        )}
 
-        {/* Main Content Area with increased padding on both sides */}
+        {/* Content Area */}
         <main className="flex-1 px-6 lg:px-16">
           <div className="max-w-7xl mx-auto w-full">
-            <div className="mb-8">
-           
-            </div>
+            <Routes>
+              {/* Default route redirects to event-type */}
+              <Route
+                path="/"
+                element={<Navigate to="/dashboard/event-type" replace />}
+              />
 
-            {/* Event Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {events.map((event) => (
-                <EventCard
-                  key={event.id}
-                  event={event}
-                  onToggleActive={handleToggleActive}
-                />
-              ))}
-            </div>
+              {/* Event Type page (default) */}
+              <Route path="/event-type" element={<EventTypeContent />} />
+
+              {/* Meetings page */}
+              <Route path="/meetings" element={<Meetings />} />
+
+              {/* Availability page */}
+              <Route path="/availability" element={<Availability />} />
+            </Routes>
           </div>
         </main>
       </div>
+
+      {/* Right-side Drawer */}
+      {selectedEvent && (
+        <EventDetailDrawer
+          event={selectedEvent}
+          onClose={closeDrawer}
+          onToggleActive={handleToggleActive}
+        />
+      )}
     </div>
   );
+  0;
 };
 
 export default Dashboard;

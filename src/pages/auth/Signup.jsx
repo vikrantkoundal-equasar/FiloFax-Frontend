@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import validator from "validator";
 import { initiateGoogleSignUp } from "../../services/auth/googleAuth";
+import axios from "axios";
 
 // Constants
 const PASSWORD_REQUIREMENTS = {
@@ -14,6 +15,8 @@ const PASSWORD_REQUIREMENTS = {
 };
 
 const NAME_REGEX = /^[a-zA-Z\s]+$/;
+
+const signupUrl = import.meta.env.VITE_BASE_AUTH_URL;
 
 export default function Signup() {
   // Form state
@@ -96,36 +99,49 @@ export default function Signup() {
   const handleMicrosoftSignUp = () => {
     // This is a placeholder for Microsoft sign-up functionality
     console.log("Microsoft sign-in clicked");
-    // You can implement similar functionality as Google sign-up
+    // Here i implement similar functionality as Google sign-up
   };
 
   // Form submission handler
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setIsLoading(true);
 
-    try {
-      // Validate all fields
-      const newErrors = {
-        email: validateEmail(formData.email),
-        name: validateName(formData.name),
-        password: validatePassword(formData.password),
-        general: "",
-      };
+  try {
+    // Validate all fields
+    const newErrors = {
+      email: validateEmail(formData.email),
+      name: validateName(formData.name),
+      password: validatePassword(formData.password),
+      general: "",
+    };
 
-      setErrors(newErrors);
+    setErrors(newErrors);
 
-      // Check if there are any errors
-      const hasErrors = Object.values(newErrors).some((error) => error !== "");
+    // Check if there are any errors
+    const hasErrors = Object.values(newErrors).some((error) => error !== "");
+    if (hasErrors) return;
 
-      if (!hasErrors) {
-        console.log("Signup attempt with:", formData);
-        // Add your API call here
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    // Send to backend
+    const response = await axios.post(`${signupUrl}/local-signUp`, {
+      email: formData.email,
+      name: formData.name,
+      password: formData.password,
+    });
+
+    console.log("Signup successful:", response.data);
+    // Redirect or show success message here
+  } catch (error) {
+    console.error("Signup failed:", error);
+    setErrors((prev) => ({
+      ...prev,
+      general:
+        error.response?.data?.msg || "Something went wrong. Please try again.",
+    }));
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-white">
