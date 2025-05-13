@@ -1,9 +1,11 @@
+// Updated Signup.jsx - Fixed navigation after signup
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import validator from "validator";
 import { initiateGoogleSignUp } from "../../services/auth/googleAuth";
 import axios from "axios";
+import { setAuthToken } from "../../utils/auth"; // Import the updated auth utility
 
 // Constants
 const PASSWORD_REQUIREMENTS = {
@@ -71,19 +73,15 @@ export default function Signup() {
   const handleGoogleSignUp = async () => {
     try {
       setIsGoogleLoading(true);
-      const response = await initiateGoogleSignUp();
-
-      // You may need to adjust this condition depending on your backend response
-      if (response?.success) {
-        navigate("/dashboard");
-      }
+      await initiateGoogleSignUp();
+      // Navigation is handled by the redirect in the initiateGoogleSignUp function
+      // and then by the useEffect in Dashboard that extracts token from URL
     } catch (error) {
       console.error("Error initiating Google sign-up:", error);
       setErrors((prev) => ({
         ...prev,
         general: error.response?.data?.msg || error.message,
       }));
-    } finally {
       setIsGoogleLoading(false);
     }
   };
@@ -120,19 +118,34 @@ export default function Signup() {
       });
 
       console.log("Signup successful:", response.data);
-      navigate("/dashboard");
+
+      // Store the token from the response
+      if (response.data?.token) {
+        const success = setAuthToken(response.data.token);
+        if (success) {
+          navigate("/dashboard");
+          return;
+        }
+      }
+
+      // If we got here, something is wrong with the token
+      throw new Error("Authentication failed: No valid token received");
     } catch (error) {
       console.error("Signup failed:", error);
       setErrors((prev) => ({
         ...prev,
         general:
           error.response?.data?.msg ||
+          error.message ||
           "Something went wrong. Please try again.",
       }));
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Rest of the component remains the same
+  // ...
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-white">

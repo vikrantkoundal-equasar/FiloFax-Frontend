@@ -1,12 +1,19 @@
+// Updated Dashboard.jsx - Fixed token handling
 import React, { useState, useEffect } from "react";
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import EventCard from "../../components/EventCard";
 import EventDetailDrawer from "../../components/eventDrawer/EventDetailDrawer";
-// Import your page components
-import Meetings from "./Meetings"; // Import your existing component
-import Availability from "./Availability"; // Import your existing component
+import Meetings from "./Meetings";
+import Availability from "./Availability";
+import { setAuthToken, isAuthenticated } from "../../utils/auth";
 
 // Sample event data - normally would come from API
 const initialEvents = [
@@ -24,26 +31,37 @@ const Dashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
-  // Check if the current page is event-type
+  // Extract token from query string and store it properly
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const token = params.get("token");
+
+    if (token) {
+      setAuthToken(token); // Use the unified auth method
+      navigate("/dashboard", { replace: true }); // Clean URL
+    }
+  }, [location, navigate]);
+
+  // Page check
   const isEventTypePage =
     location.pathname === "/dashboard" ||
     location.pathname === "/dashboard/event-type";
 
   const handleCardClick = (event) => {
-    setSelectedEvent(event); // open drawer
+    setSelectedEvent(event);
   };
 
   const closeDrawer = () => {
-    setSelectedEvent(null); // close drawer
+    setSelectedEvent(null);
   };
 
-  // Screen size check
   useEffect(() => {
     const checkScreenSize = () => {
       const mobile = window.innerWidth < 1024;
       setIsMobile(mobile);
-      setIsSidebarOpen(!mobile); // open by default on desktop
+      setIsSidebarOpen(!mobile);
     };
 
     checkScreenSize();
@@ -61,7 +79,6 @@ const Dashboard = () => {
         event.id === eventId ? { ...event, isActive } : event
       )
     );
-
     console.log(
       `API call to update event ${eventId} to ${
         isActive ? "active" : "inactive"
@@ -80,11 +97,9 @@ const Dashboard = () => {
     setEvents([...events, newEvent]);
   };
 
-  // EventType page content - this is your current dashboard content
   const EventTypeContent = () => (
     <>
       <div className="mb-8"></div>
-      {/* Event Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {events.map((event) => (
           <EventCard
@@ -100,20 +115,17 @@ const Dashboard = () => {
 
   return (
     <div className="flex min-h-screen bg-white">
-      {/* Sidebar */}
       <Sidebar
         isSidebarOpen={isSidebarOpen}
         toggleSidebar={toggleSidebar}
         isMobile={isMobile}
       />
 
-      {/* Main Area */}
       <div
         className={`flex-1 flex flex-col transition-all duration-300 ${
           isSidebarOpen && !isMobile ? "lg:ml-[230px]" : ""
         }`}
       >
-        {/* Header - Only render for Event Type page */}
         {isEventTypePage && (
           <div className="lg:pr-28">
             <Header
@@ -123,30 +135,21 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* Content Area */}
         <main className="flex-1 px-6 lg:px-16">
           <div className="max-w-7xl mx-auto w-full">
             <Routes>
-              {/* Default route redirects to event-type */}
               <Route
                 path="/"
                 element={<Navigate to="/dashboard/event-type" replace />}
               />
-
-              {/* Event Type page (default) */}
               <Route path="/event-type" element={<EventTypeContent />} />
-
-              {/* Meetings page */}
               <Route path="/meetings" element={<Meetings />} />
-
-              {/* Availability page */}
               <Route path="/availability" element={<Availability />} />
             </Routes>
           </div>
         </main>
       </div>
 
-      {/* Right-side Drawer */}
       {selectedEvent && (
         <EventDetailDrawer
           event={selectedEvent}
@@ -156,7 +159,6 @@ const Dashboard = () => {
       )}
     </div>
   );
-  0;
 };
 
 export default Dashboard;
