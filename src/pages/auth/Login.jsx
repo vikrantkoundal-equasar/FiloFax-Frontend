@@ -5,6 +5,9 @@ import validator from "validator";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
+import { useDispatch } from "react-redux";
+import { setUserDetails } from "../../redux/userSlice";
+
 
 // Constants
 const PASSWORD_REQUIREMENTS = {
@@ -19,6 +22,8 @@ const loginUrl = import.meta.env.VITE_BASE_AUTH_URL;
 export default function Login() {
   // Form state
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -69,33 +74,31 @@ const handleSubmit = async (e) => {
       Cookies.set("token", token, { expires: 1 }); // expires in 1 day
       Cookies.set("refreshToken", refreshToken, { expires: 7 }); // optional
 
+      // ✅ Save user details to Redux store
+      dispatch(setUserDetails(response.data.userDetails));
+
       // Navigate to dashboard
       navigate("/dashboard");
     } catch (error) {
       if (error.response) {
-        // 👇 Backend responded with an error
         console.error("Login failed with response:", error.response);
-
         const status = error.response.status;
         const message =
           error.response.data?.message ||
           error.response.data?.error ||
           "Unknown error from server";
-
         alert(`Login failed [${status}]: ${message}`);
       } else if (error.request) {
-        // 👇 Request was made but no response received
         console.error("No response received:", error.request);
         alert("Login failed: No response from server.");
       } else {
-        // 👇 Something else caused the error
         console.error("Error in request setup:", error.message);
         alert("Login failed: " + error.message);
       }
     }
-
   }
 };
+
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-white">
