@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import validator from "validator";
 import { initiateGoogleSignUp } from "../../services/auth/googleAuth";
@@ -15,30 +15,27 @@ const PASSWORD_REQUIREMENTS = {
 };
 
 const NAME_REGEX = /^[a-zA-Z\s]+$/;
-
 const signupUrl = import.meta.env.VITE_BASE_AUTH_URL;
 
 export default function Signup() {
-  // Form state
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     email: "",
     name: "",
     password: "",
   });
 
-  // Error state
   const [errors, setErrors] = useState({
     email: "",
     name: "",
     password: "",
-    general: "", // Added for general errors
+    general: "",
   });
 
-  // Loading states
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  // Input change handler
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -47,7 +44,6 @@ export default function Signup() {
     }));
   };
 
-  // Validation functions
   const validateEmail = (email) => {
     return validator.isEmail(email)
       ? ""
@@ -57,58 +53,50 @@ export default function Signup() {
   const validateName = (name) => {
     const trimmedName = name.trim();
 
-    if (trimmedName.length === 0) {
-      return "Please enter your name.";
-    }
-
-    if (!NAME_REGEX.test(trimmedName)) {
+    if (trimmedName.length === 0) return "Please enter your name.";
+    if (!NAME_REGEX.test(trimmedName))
       return "Name must contain only letters and spaces.";
-    }
-
-    if (trimmedName.length < 2) {
+    if (trimmedName.length < 2)
       return "Name must be at least 2 characters long.";
-    }
 
     return "";
   };
+
   const validatePassword = (password) => {
     return validator.isStrongPassword(password, PASSWORD_REQUIREMENTS)
       ? ""
       : "Password must be at least 12 characters long and include uppercase, lowercase, number, and special character.";
   };
 
-  // Google sign-up handler
   const handleGoogleSignUp = async () => {
     try {
       setIsGoogleLoading(true);
-      // Use the service function
       const response = await initiateGoogleSignUp();
-      
+
+      // You may need to adjust this condition depending on your backend response
+      if (response?.success) {
+        navigate("/dashboard");
+      }
     } catch (error) {
       console.error("Error initiating Google sign-up:", error);
-      if (error.response?.data?.msg) {
-        setErrors((prev) => ({ ...prev, general: error.response.data.msg }));
-      } else {
-        setErrors((prev) => ({ ...prev, general: error.message }));
-      }
+      setErrors((prev) => ({
+        ...prev,
+        general: error.response?.data?.msg || error.message,
+      }));
     } finally {
       setIsGoogleLoading(false);
     }
   };
-  // Microsoft sign-up handler
+
   const handleMicrosoftSignUp = () => {
-    // This is a placeholder for Microsoft sign-up functionality
     console.log("Microsoft sign-in clicked");
-    // Here i implement similar functionality as Google sign-up
+    // Implement Microsoft sign-up logic
   };
 
-  // Form submission handler
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsLoading(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-  try {
-    // Validate all fields
     const newErrors = {
       email: validateEmail(formData.email),
       name: validateName(formData.name),
@@ -118,30 +106,33 @@ const handleSubmit = async (e) => {
 
     setErrors(newErrors);
 
-    // Check if there are any errors
     const hasErrors = Object.values(newErrors).some((error) => error !== "");
-    if (hasErrors) return;
+    if (hasErrors) {
+      setIsLoading(false);
+      return;
+    }
 
-    // Send to backend
-    const response = await axios.post(`${signupUrl}/local-signUp`, {
-      email: formData.email,
-      name: formData.name,
-      password: formData.password,
-    });
+    try {
+      const response = await axios.post(`${signupUrl}/local-signUp`, {
+        email: formData.email,
+        name: formData.name,
+        password: formData.password,
+      });
 
-    console.log("Signup successful:", response.data);
-    // Redirect or show success message here
-  } catch (error) {
-    console.error("Signup failed:", error);
-    setErrors((prev) => ({
-      ...prev,
-      general:
-        error.response?.data?.msg || "Something went wrong. Please try again.",
-    }));
-  } finally {
-    setIsLoading(false);
-  }
-};
+      console.log("Signup successful:", response.data);
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Signup failed:", error);
+      setErrors((prev) => ({
+        ...prev,
+        general:
+          error.response?.data?.msg ||
+          "Something went wrong. Please try again.",
+      }));
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-white">

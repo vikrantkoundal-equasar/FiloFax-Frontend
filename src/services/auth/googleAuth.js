@@ -1,22 +1,12 @@
 import axios from "axios";
+import { redirect } from "react-router-dom";
 
 const baseURL = import.meta.env.VITE_BASE_AUTH_URL;
+export const initiateGoogleSignUp = () => {
+  console.log("Initiating Google sign-up...");
 
-export const initiateGoogleSignUp = async () => {
-  console.log("url", baseURL);
-  try {
-    console.log("Initiating Google sign-up...");
-
-    const response = await axios.get(`${baseURL}/google`);
-
-    console.log(response, "response is ==>>");
-    console.log("response coming is ==>>", response.data);
-
-    window.location.href = response.data.redirectUrl;
-  } catch (error) {
-    console.error("Error initiating Google sign-up:", error);
-    throw error;
-  }
+  // Simply redirect the browser to your backend Google OAuth route
+  window.location.href = `${baseURL}/google`;
 };
 
 export default {

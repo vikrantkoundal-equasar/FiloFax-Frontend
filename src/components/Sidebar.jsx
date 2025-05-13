@@ -1,5 +1,5 @@
 import React from "react";
-import { Menu, Calendar, Clock, Search } from "lucide-react";
+import { Menu, Calendar, Clock, Search, LogOut } from "lucide-react";
 import { FaLink } from "react-icons/fa";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import PropTypes from "prop-types";
@@ -33,7 +33,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, isMobile }) => {
             />
             <div className="ml-3">
               <h3 className="font-normal font-lexend text-sm">Jason Jay</h3>
-            </div>  
+            </div>
           </Link>
 
           {/* Search Button */}
@@ -97,6 +97,20 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar, isMobile }) => {
                 />
               </div>
               Availability
+            </div>
+
+            {/* Logout button at bottom */}
+            <div className="absolute bottom-6 w-full px-4">
+              <div
+                className="flex items-center px-2 py-2 text-xl font-light rounded-md hover:bg-gray-100 cursor-pointer"
+               
+              >
+                <div className="mr-3 w-6">
+                  <LogOut className="h-5 w-5 text-gray-400" />
+                </div>
+                
+                Logout
+              </div>
             </div>
           </div>
         </nav>
